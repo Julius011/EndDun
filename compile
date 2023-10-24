@@ -1,0 +1,5 @@
+#!/bin/bash
+
+rm Endless
+clear
+cc Endless.c $(pkg-config --libs --cflags raylib) -o Endless
