@@ -3,11 +3,8 @@
 #include "stdlib.h"
 #include "structs.c"
 
-#define MAP_WIDTH 512
-#define MAP_HEIGHT 512
-#define TILE_SIZE 32
-
-int worldMap[MAP_WIDTH][MAP_HEIGHT];
+#define SCREEN_WIDTH 900
+#define SCREEN_HEIGHT 700
 
 // Load all the textures from sprite folder
 void LoadAllTextures()
@@ -19,36 +16,52 @@ void LoadAllTextures()
     textures[TEXTURE_PLAYER_RUNNING_UP] = LoadTexture("sprites/HunterWithGun.png");
     textures[TEXTURE_PLAYER_RUNNING_DOWN] = LoadTexture("sprites/HunterWithGun.png");
 
-    // Animalsprites
+    // Animal sprites
     textures[TEXTURE_ANIMAL_TURKEY] = LoadTexture("sprites/Turkey.png");
     textures[TEXTURE_ANIMAL_BIGHORNSHEEP] = LoadTexture("sprites/BigHornSheep.png");
     textures[TEXTURE_ANIMAL_PRONGHORN] = LoadTexture("sprites/Pronghorn.png");
     textures[TEXTURE_ANIMAL_BLACKBEAR] = LoadTexture("sprites/Blackbear.png");
     textures[TEXTURE_ANIMAL_ROCKYMOUNTAINELK] = LoadTexture("sprites/RockyMountainElk.png");
     textures[TEXTURE_ANIMAL_MOUNTAINLION] = LoadTexture("sprites/Mountainlion.png");
+
+    // Tile sprites
+    textures[TEXTURE_TILE_GRASS] = LoadTexture("sprites/GrassTile.png");
+    textures[TEXTURE_TILE_GRASS2] = LoadTexture("sprites/GrassTile2.png");
 }
 
-void GenerateTerrain()
-{
-    // Initialize the random number generator with a seed
-    srand(GetTime());
+// Generate world
+void GenerateWorld() {
+    for (int i = 0; i < WORLD_SIZE; i++) {
+        for (int j = 0; j < WORLD_SIZE; j++) {
+            world[i][j].rect = (Rectangle){i * TILE_SIZE, j * TILE_SIZE, TILE_SIZE, TILE_SIZE};
+            world[i][j].tileType = GetRandomValue(0, 1);
+        }
+    }
+}
 
-    // Fill the worldMap with random heights
-    for (int y = 0; y < MAP_HEIGHT; y++)
-    {
-        for (int x = 0; x < MAP_WIDTH; x++)
-        {
-            worldMap[x][y] = GetRandomValue(0, 255);
+// Render world
+void RenderWorld() {
+    for (int i = 0; i < RENDER_SIZE; i++) {
+        for (int j = 0; j < RENDER_SIZE; j++) {
+            if ((i * TILE_SIZE) > SCREEN_WIDTH || (j * TILE_SIZE) > SCREEN_HEIGHT) {
+                continue; // Skip rendering if outside the screen
+            }
+            Rectangle tileRect = world[i][j].rect;
+            if (world[i][j].tileType == 0) {
+                DrawTexture(textures[TEXTURE_TILE_GRASS], tileRect.x, tileRect.y, WHITE);
+            } else {
+                DrawTexture(textures[TEXTURE_TILE_GRASS2], tileRect.x, tileRect.y, WHITE);
+            }
         }
     }
 }
 
 int main()
 {
-    InitWindow(800, 600, "Procedural Generation");
+    InitWindow(SCREEN_WIDTH, SCREEN_HEIGHT, "Procedural Generation");
     SetTargetFPS(60);  // Sets the framerate
-    LoadAllTextures(); // Call the "LoadAllTextures" function
-    GenerateTerrain(); // 
+    LoadAllTextures(); // Load texture
+    GenerateWorld();
 
     // Player initialise
     Hunter player = (Hunter){
@@ -88,8 +101,7 @@ int main()
                 .frame_duration = 0.1f,
                 .timer = 0,
             }},
-        .rect = (Rectangle){800 / 2, 600 / 2, 16, 32},
-        .velocity = 0,
+        .rect = (Rectangle){SCREEN_WIDTH/2, SCREEN_HEIGHT/2, 16, 32},
         .current_animation = 0};
 
     while (!WindowShouldClose())
@@ -136,28 +148,37 @@ int main()
             player.current_animation = 4; // Set animation to running down
         }
 
+        // Hidden collision
+        if (player.rect.x > 785)
+        {
+            player.rect.x -= 10.0f;
+        }
+        else if (player.rect.x < 100)
+        {
+            player.rect.x += 10.0f;
+        }
+        if (player.rect.y > 568)
+        {
+            player.rect.y -= 10.0f;
+        }
+        else if (player.rect.y < 100)
+        {
+            player.rect.y += 10.0f;
+        }
+
         //----------------------------------------------------
         // Draw
         //----------------------------------------------------
         BeginDrawing();
-        ClearBackground(BLACK);
+        ClearBackground(WHITE);
 
-        // Render the terrain
-        for (int y = 0; y < MAP_HEIGHT; y++)
-        {
-            for (int x = 0; x < MAP_WIDTH; x++)
-            {
-                // Calculate the position for this tile
-                int posX = x * TILE_SIZE;
-                int posY = y * TILE_SIZE;
+        RenderWorld();
 
-                // Map the height value to a grayscale color
-                Color color = (Color){worldMap[x][y], worldMap[x][y], worldMap[x][y], 255};
-
-                // Draw a rectangle as a terrain tile
-                DrawRectangle(posX, posY, TILE_SIZE, TILE_SIZE, color);
-            }
-        }
+        // Draw black blocks around render view
+        DrawRectangle(0, 0, 100, 700, BLACK);
+        DrawRectangle(0, 0, 900, 100, BLACK); 
+        DrawRectangle(800, 0, 100, 700, BLACK); 
+        DrawRectangle(0, 600, 900, 100, BLACK); 
 
         // Draw player
         DrawTexturePro(textures[player.animations[player.current_animation].texture_id], (Rectangle){32 * player.animations[player.current_animation].current_frame, 0, 16, 32}, player.rect, Vector2Zero(), 0, WHITE);
