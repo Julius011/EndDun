@@ -4,8 +4,18 @@
 #define MAX_TEXTURES_IN_MEMORY 128
 #define MAX_ANIMATIONS_PER_ENTITY 6
 #define MAX_ANIMATIONS_PER_OBJECT 1
+#define TILE_SIZE 32
+#define WORLD_SIZE 175
+#define RENDER_SIZE 25
 
 Texture2D textures[MAX_TEXTURES_IN_MEMORY];
+
+typedef struct {
+    int tileType;
+    Rectangle rect;
+} Tile;
+
+Tile world[WORLD_SIZE][WORLD_SIZE]; // 2D array to hold the world's tiles
 
 typedef enum  
 {
@@ -20,6 +30,8 @@ typedef enum
     TEXTURE_ANIMAL_BLACKBEAR,
     TEXTURE_ANIMAL_ROCKYMOUNTAINELK,
     TEXTURE_ANIMAL_MOUNTAINLION,
+    TEXTURE_TILE_GRASS,
+    TEXTURE_TILE_GRASS2,
     TEXTURE_NUM
 } textures_e;
 
@@ -34,9 +46,6 @@ typedef struct
 
 typedef struct
 {
-    float velocity;
-    float soundLevel;
-    int ammunition;
     Rectangle rect;
     Animation animations[MAX_ANIMATIONS_PER_ENTITY];
     int current_animation;
@@ -44,7 +53,6 @@ typedef struct
 
 typedef struct
 {
-    float velocity;
     Rectangle rect;
     Animation animations[MAX_ANIMATIONS_PER_ENTITY];
     int current_animation;
